@@ -341,3 +341,9 @@ import { Spinner } from "@/components/ui/spinner";
 5. Utilisez les couleurs semantiques (`bg-primary`, `text-muted-foreground`)
 
 Le projet est votre terrain de jeu. Amusez-vous bien.
+
+---
+
+## Contribution
+
+Avant de contribuer, lisez le [Guide de contribution](CONTRIBUTING.md). Il definit les standards de code, les conventions de nommage et le workflow Git a respecter.
