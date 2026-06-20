@@ -42,7 +42,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !!getToken());
 
   const refresh = useCallback(async () => {
     try {
@@ -55,13 +55,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Au montage, si un token existe, charger le profil
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      setIsLoading(false);
-      return;
+    if (!isLoading) return;
+
+    let ignore = false;
+
+    async function loadProfile() {
+      try {
+        const profile = await auth.getProfile();
+        if (!ignore) setUser(profile);
+      } catch {
+        if (!ignore) setUser(null);
+      } finally {
+        if (!ignore) setIsLoading(false);
+      }
     }
-    refresh().finally(() => setIsLoading(false));
-  }, [refresh]);
+
+    void loadProfile();
+
+    return () => {
+      ignore = true;
+    };
+  }, [isLoading]);
 
   const login = useCallback(async (payload: LoginPayload) => {
     const user = await auth.login(payload);
