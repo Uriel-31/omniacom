@@ -119,7 +119,16 @@ export function useCrud<T extends Record<string, unknown>>(
 
   // Recharger quand les dependances changent
   useEffect(() => {
-    fetchList();
+    let ignore = false;
+
+    void Promise.resolve().then(() => {
+      if (!ignore) void fetchList();
+    });
+
+    return () => {
+      ignore = true;
+      abortRef.current?.abort();
+    };
   }, [fetchList]);
 
   // -----------------------------------------------------------------------
@@ -147,8 +156,9 @@ export function useCrud<T extends Record<string, unknown>>(
 
   const handleRemoveFilter = useCallback((key: string) => {
     setFilters((prev) => {
-      const { [key]: _removed, ...rest } = prev;
-      return rest;
+      const next = { ...prev };
+      delete next[key];
+      return next;
     });
     setPage(1);
   }, []);
