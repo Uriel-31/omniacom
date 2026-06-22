@@ -36,7 +36,7 @@ import type {
   CrudParams,
   UseCrudOptions,
   UseCrudReturn,
-} from "@/types";
+} from "@/types/crud";
 
 // ---------------------------------------------------------------------------
 // Hook

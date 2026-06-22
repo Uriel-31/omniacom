@@ -26,7 +26,7 @@ export default function Login() {
         setIsLoggingIn(true);
 
         try {
-            await login({ email, password });
+            await login(email, password);
             // TODO: Let login redirect to the corresponding dashboard based on the user role
             router.push("/");
         } catch (err) {
