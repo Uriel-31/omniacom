@@ -36,7 +36,7 @@ import type {
   CrudParams,
   UseCrudOptions,
   UseCrudReturn,
-} from "@/types";
+} from "@/types/crud";
 
 // ---------------------------------------------------------------------------
 // Hook
@@ -119,7 +119,9 @@ export function useCrud<T extends Record<string, unknown>>(
 
   // Recharger quand les dependances changent
   useEffect(() => {
-    fetchList();
+    queueMicrotask(() => {
+      fetchList();
+    });
   }, [fetchList]);
 
   // -----------------------------------------------------------------------
@@ -147,7 +149,8 @@ export function useCrud<T extends Record<string, unknown>>(
 
   const handleRemoveFilter = useCallback((key: string) => {
     setFilters((prev) => {
-      const { [key]: _removed, ...rest } = prev;
+      const { [key]: removed, ...rest } = prev;
+      void removed;
       return rest;
     });
     setPage(1);

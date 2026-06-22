@@ -1,63 +1,43 @@
 /**
- * Instance Axios preconfiguree.
+ * Instance Axios préconsfigurée.
+ * Le token JWT est géré dans lib/api.ts (storage.getToken).
+ * Ce fichier reste disponible pour les appels directs ad-hoc.
  *
- * - URL de base depuis les variables d'environnement
- * - Attache automatiquement le token JWT (Bearer) aux requetes
- * - Gere les erreurs 401 (token expire → redirection connexion)
- *
- * Utilisation :
- *   import { api } from "@/lib/axios";
- *   const { data } = await api.get("/endpoint");
+ * Usage :
+ *   import { api } from "@/lib/api";   ← méthodes métier recommandées
+ *   import { http } from "@/lib/axios"; ← appels bruts si nécessaire
  */
 
-import axios, { type AxiosError } from "axios";
-import { getToken, removeToken } from "./auth";
+import axios from "axios";
 
-export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+const TOKEN_KEY = "omniacom_token";
+
+export const http = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api",
   timeout: 15_000,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
 });
 
-// ---------------------------------------------------------------------------
-// Intercepteur de requete : attache le token Bearer
-// ---------------------------------------------------------------------------
+http.interceptors.request.use((config) => {
+  const token = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
-api.interceptors.request.use(
-  (config) => {
-    const token = getToken();
-
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
-    return config;
-  },
-  (error) => Promise.reject(error),
-);
-
-// ---------------------------------------------------------------------------
-// Intercepteur de reponse : gere les 401
-// ---------------------------------------------------------------------------
-
-api.interceptors.response.use(
-  (response) => response,
-  (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      removeToken();
-
-      // Rediriger vers la page de connexion
-      if (typeof window !== "undefined") {
-        // Eviter les boucles de redirection si on est deja sur /auth/*
-        const pathname = window.location.pathname;
-        if (!pathname.startsWith("/auth/")) {
-          window.location.href = `/auth/login?redirect=${encodeURIComponent(pathname)}`;
-        }
+http.interceptors.response.use(
+  (r) => r,
+  (err) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem(TOKEN_KEY);
+      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+        window.location.href = "/login";
       }
     }
-
-    return Promise.reject(error);
+    return Promise.reject(err);
   },
 );
+
+// Alias legacy pour la compatibilité avec le README (import { api } from "@/lib/axios")
+export { http as api };
