@@ -4,7 +4,6 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { useRouter } from "next/navigation";
 import type { User, Role } from "@/types";
 import { api, storage } from "./api";
-import { HOME_BY_ROLE } from "./constants";
 
 interface AuthCtx {
   user: User | null;
@@ -30,7 +29,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     const u = await api.login(email, password);
     setUser(u);
-    router.push(HOME_BY_ROLE[u.role]);
     return u;
   };
 

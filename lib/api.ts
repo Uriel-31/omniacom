@@ -12,7 +12,13 @@ const USER_KEY  = "omniacom_user";
 export const storage = {
   getToken: (): string | null =>
     typeof window === "undefined" ? null : localStorage.getItem(TOKEN_KEY),
-  setToken: (t: string) => localStorage.setItem(TOKEN_KEY, t),
+  setToken: (t: string) => {
+    localStorage.setItem(TOKEN_KEY, t);
+    // Sync to cookie so Next.js middleware can read it server-side
+    if (typeof window !== "undefined") {
+      document.cookie = `access_token=${encodeURIComponent(t)}; path=/; max-age=86400; SameSite=Lax`;
+    }
+  },
   getUser: (): User | null => {
     if (typeof window === "undefined") return null;
     const raw = localStorage.getItem(USER_KEY);
@@ -22,6 +28,9 @@ export const storage = {
   clear: () => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    if (typeof window !== "undefined") {
+      document.cookie = "access_token=; path=/; max-age=0";
+    }
   },
 };
 

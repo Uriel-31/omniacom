@@ -6,6 +6,7 @@ import { Menu, X } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 import { Logo, Loader } from "@/components/app/brand/Logo";
 import { useAuth, allowedRolesFor } from "@/lib/auth-context";
+import { HOME_BY_ROLE } from "@/lib/constants";
 import type { ReactNode } from "react";
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -18,9 +19,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (loading) return;
     if (!user) {
-      router.replace("/login");
+      router.replace(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
     } else if (!allowedRolesFor(pathname).includes(user.role)) {
-      router.replace("/login");
+      router.replace(HOME_BY_ROLE[user.role]);
     }
   }, [user, loading, pathname, router]);
 

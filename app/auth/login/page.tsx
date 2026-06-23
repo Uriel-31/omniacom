@@ -1,18 +1,21 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { HOME_BY_ROLE } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, AlertCircle } from "lucide-react";
+import type { Role } from "@/types";
 
 export default function Login() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -27,23 +30,11 @@ export default function Login() {
 
         try {
             const user = await login(email, password);
-
-            switch (user.role) {
-                case "GESTIONNAIRE_PLANNING":
-                    router.push("/planning");
-                    break;
-                case "GESTIONNAIRE_EPI":
-                    router.push("/epi");
-                    break;
-                case "PMO":
-                    router.push("/pmo");
-                    break;
-                case "ADMIN":
-                    router.push("/admin");
-                    break;
-                default:
-                    router.push("/");
-            }
+            // Use HOME_BY_ROLE for consistent redirect, with fallback
+            const home = HOME_BY_ROLE[user.role as Role] ?? "/planning";
+            // Respect redirect param if provided (e.g. from middleware)
+            const redirect = searchParams.get("redirect");
+            router.push(redirect ?? home);
         } catch (err) {
             setError(
                 err instanceof Error
