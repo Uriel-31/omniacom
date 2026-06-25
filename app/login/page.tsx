@@ -2,7 +2,10 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { HOME_BY_ROLE } from "@/lib/constants";
+import type { Role } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -16,13 +19,18 @@ export default function LoginPage() {
   const [error, setError]       = useState<string | null>(null);
 
   const { login } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   async function handleSubmit(e: { preventDefault(): void }) {
     e.preventDefault();
     setError(null);
     setBusy(true);
     try {
-      await login(email, password);
+      const user = await login(email, password);
+      const home = HOME_BY_ROLE[user.role as Role] ?? "/planning";
+      const redirect = searchParams.get("redirect");
+      router.push(redirect ?? home);
     } catch (err) {
       setError(
         err instanceof Error

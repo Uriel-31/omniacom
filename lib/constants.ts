@@ -8,7 +8,6 @@ import {
   Building2,
   Receipt,
   UserCog,
-  HardHat,
   ScrollText,
   Settings,
   type LucideIcon,
@@ -39,9 +38,7 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { label: "Feuilles de présence",   href: "/planning/presences",    icon: ClipboardList    },
   ],
   GESTIONNAIRE_EPI: [
-    { label: "Dashboard",     href: "/epi",               icon: LayoutDashboard },
-    { label: "Équipements",   href: "/epi/equipements",   icon: HardHat         },
-    { label: "Vérifications", href: "/epi/verifications", icon: ShieldCheck     },
+    { label: "Vérifications", href: "/epi/verifications", icon: ShieldCheck },
   ],
   PMO: [
     { label: "Dashboard",         href: "/pmo",                 icon: LayoutDashboard },
@@ -68,9 +65,9 @@ export const ROLE_LABEL: Record<Role, string> = {
 
 export const HOME_BY_ROLE: Record<Role, string> = {
   GESTIONNAIRE_PLANNING: "/planning",
-  GESTIONNAIRE_EPI:      "/epi",
+  GESTIONNAIRE_EPI:      "/epi/verifications",
   PMO:                   "/pmo",
-  ADMIN:                 "/admin/utilisateurs",
+  ADMIN:                 "/admin",
   UTILISATEUR:           "/planning",
 };
 

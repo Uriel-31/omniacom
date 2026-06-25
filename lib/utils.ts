@@ -28,7 +28,7 @@ export function formatDate(iso?: string) {
 }
 
 /** Date courte : 24/05/2024. */
-export function formatDateShort(iso?: string) {
+export function formatDateShort(iso?: string | null) {
   if (!iso) return "—";
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "—";

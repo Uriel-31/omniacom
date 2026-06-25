@@ -3,7 +3,7 @@
  * Fonctions async pour éviter les problèmes de bundle SSR avec Next.js.
  */
 
-/** Export en fichier Excel (.xlsx). */
+/** Export en fichier Excel (.xlsx) — sans style. */
 export async function exportExcel(
   rows: Record<string, string | number>[],
   filename: string,
@@ -13,6 +13,84 @@ export async function exportExcel(
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Export");
   XLSX.writeFile(wb, `${filename}.xlsx`);
+}
+
+/** Export Excel stylisé pour le tracker EPI. */
+export async function exportEpiExcel(
+  rows: {
+    nom: string;
+    prenom: string;
+    dateDerniereVerif: string;
+    dateDemande: string;
+    dateEnvoie: string;
+    joursRetard: string | number;
+    prochaineDate: string;
+  }[],
+  filename: string,
+) {
+  const ExcelJS = (await import("exceljs")).default ?? (await import("exceljs"));
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Suivi EPI");
+
+  const COLS = [
+    { header: "Noms",                              key: "nom",               width: 22 },
+    { header: "Prénoms",                           key: "prenom",            width: 18 },
+    { header: "Date dernière vérification",        key: "dateDerniereVerif", width: 28 },
+    { header: "Date de demande des évidences",     key: "dateDemande",       width: 30 },
+    { header: "Date d'envoi de la ressource",      key: "dateEnvoie",        width: 28 },
+    { header: "Nombre de jours de retard",         key: "joursRetard",       width: 25 },
+    { header: "Date de prochaine vérification",    key: "prochaineDate",     width: 30 },
+  ];
+
+  sheet.columns = COLS.map(({ header, key, width }) => ({ header, key, width }));
+
+  // Style en-tête
+  const headerRow = sheet.getRow(1);
+  headerRow.height = 42;
+  headerRow.eachCell((cell) => {
+    cell.fill   = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD0453A" } };
+    cell.font   = { bold: true, color: { argb: "FFFFFFFF" }, size: 10, name: "Calibri" };
+    cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+    cell.border = {
+      top:    { style: "thin", color: { argb: "FF000000" } },
+      left:   { style: "thin", color: { argb: "FF000000" } },
+      bottom: { style: "thin", color: { argb: "FF000000" } },
+      right:  { style: "thin", color: { argb: "FF000000" } },
+    };
+  });
+
+  // Lignes de données
+  rows.forEach((r) => {
+    const row = sheet.addRow({
+      nom:               r.nom,
+      prenom:            r.prenom,
+      dateDerniereVerif: r.dateDerniereVerif,
+      dateDemande:       r.dateDemande,
+      dateEnvoie:        r.dateEnvoie,
+      joursRetard:       r.joursRetard,
+      prochaineDate:     r.prochaineDate,
+    });
+    row.height = 18;
+    row.eachCell({ includeEmpty: true }, (cell) => {
+      cell.alignment = { vertical: "middle" };
+      cell.border = {
+        top:    { style: "thin", color: { argb: "FFD3D3D3" } },
+        left:   { style: "thin", color: { argb: "FFD3D3D3" } },
+        bottom: { style: "thin", color: { argb: "FFD3D3D3" } },
+        right:  { style: "thin", color: { argb: "FFD3D3D3" } },
+      };
+    });
+  });
+
+  // Téléchargement côté navigateur
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob   = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const url    = URL.createObjectURL(blob);
+  const a      = document.createElement("a");
+  a.href       = url;
+  a.download   = `${filename}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 /** Export en PDF — tableau générique. */

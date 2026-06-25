@@ -88,11 +88,11 @@ export type VerificationEPIStatut = "CONFORME" | "EN_RETARD" | "DEFECTUEUX";
 export interface VerificationEpi {
   id: number;
   technicienId: number;
-  dateDerniereVerif: string;
+  dateDerniereVerif?: string | null;
   dateDemande: string;
-  dateEnvoie: string;
+  dateEnvoie?: string | null;
   joursRetard: number;
-  prochaineDate: string;
+  prochaineDate?: string | null;
   statut: VerificationEPIStatut;
   technicien?: Technicien;
   equipements?: Equipement[];
