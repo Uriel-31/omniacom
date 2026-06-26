@@ -25,7 +25,9 @@ export function OmniRing({
     >
       {/* Anneau gris (300°, ouverture à 7 h-9 h, côté gauche) */}
       <circle
-        cx="24" cy="24" r="17"
+        cx="24"
+        cy="24"
+        r="17"
         stroke="#7d8187"
         strokeWidth="6"
         strokeLinecap="round"
@@ -34,7 +36,9 @@ export function OmniRing({
       />
       {/* Arc rouge accent (~70°, sommet 11 h-1 h) */}
       <circle
-        cx="24" cy="24" r="17"
+        cx="24"
+        cy="24"
+        r="17"
         stroke="#e2342b"
         strokeWidth="6"
         strokeLinecap="round"
@@ -63,6 +67,7 @@ export function Logo({
         width={size}
         height={size}
         className="shrink-0 object-contain"
+        style={{ width: "auto", height: "auto" }}
       />
       {withWordmark && (
         <span

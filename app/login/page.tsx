@@ -2,7 +2,10 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { HOME_BY_ROLE } from "@/lib/constants";
+import type { Role } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -10,19 +13,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail]       = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [busy, setBusy]         = useState(false);
-  const [error, setError]       = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const { login } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   async function handleSubmit(e: { preventDefault(): void }) {
     e.preventDefault();
     setError(null);
     setBusy(true);
     try {
-      await login(email, password);
+      const user = await login(email, password);
+      const home = HOME_BY_ROLE[user.role as Role] ?? "/planning";
+      const redirect = searchParams.get("redirect");
+      router.push(redirect ?? home);
     } catch (err) {
       setError(
         err instanceof Error
@@ -37,7 +45,10 @@ export default function LoginPage() {
   return (
     <main
       className="relative min-h-screen overflow-hidden"
-      style={{ background: "linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f0f23 100%)" }}
+      style={{
+        background:
+          "linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f0f23 100%)",
+      }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -45,13 +56,14 @@ export default function LoginPage() {
         alt=""
         aria-hidden
         className="absolute inset-0 h-full w-full object-cover"
-        onError={(e) => { e.currentTarget.style.display = "none"; }}
+        onError={(e) => {
+          e.currentTarget.style.display = "none";
+        }}
       />
       <div className="absolute inset-0 bg-black/40" />
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-6">
         <div className="w-full max-w-md">
-
           <div className="mb-8 flex flex-col items-center">
             <Image
               src="/logo-.png"
@@ -60,6 +72,7 @@ export default function LoginPage() {
               height={110}
               priority
               className="object-contain"
+              style={{ width: "auto", height: "auto" }}
             />
             <h1 className="mt-3 text-2xl font-bold uppercase tracking-[0.25em] text-white">
               OMNIACOM
@@ -84,7 +97,9 @@ export default function LoginPage() {
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-white/90">E-mail</Label>
+                  <Label htmlFor="email" className="text-white/90">
+                    E-mail
+                  </Label>
                   <Input
                     id="email"
                     type="email"
@@ -97,7 +112,9 @@ export default function LoginPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-white/90">Mot de passe</Label>
+                  <Label htmlFor="password" className="text-white/90">
+                    Mot de passe
+                  </Label>
                   <Input
                     id="password"
                     type="password"
@@ -115,7 +132,9 @@ export default function LoginPage() {
                   className="flex h-11 w-full items-center justify-center gap-2 bg-[#D0453A] text-base font-semibold hover:bg-[#b83830] disabled:cursor-not-allowed disabled:bg-[#636363]"
                 >
                   {busy ? (
-                    <><Loader2 className="h-5 w-5 animate-spin" /> Connexion…</>
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" /> Connexion…
+                    </>
                   ) : (
                     "Se connecter"
                   )}

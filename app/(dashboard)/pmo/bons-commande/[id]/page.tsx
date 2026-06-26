@@ -14,14 +14,18 @@ import { EmptyState } from "@/components/app/primitives/misc";
 import { Table, THead, TBody, TR, TH, TD } from "@/components/app/primitives/Table";
 import { useAsync } from "@/hooks/use-async";
 import { api } from "@/lib/api";
-import { formatMontant, formatDateShort } from "@/lib/utils";
+import { formatMontant, formatDateShort, isBcSolde } from "@/lib/utils";
 
 const STATUT_PAIEMENT_LABEL: Record<string, string> = {
+  PAID:       "Payé",
+  NOT_PAID:   "Non payé",
   PAYE:       "Payé",
   EN_ATTENTE: "En attente",
   ANNULE:     "Annulé",
 };
 const STATUT_PAIEMENT_TONE: Record<string, "ok" | "warn" | "danger"> = {
+  PAID:       "ok",
+  NOT_PAID:   "warn",
   PAYE:       "ok",
   EN_ATTENTE: "warn",
   ANNULE:     "danger",
@@ -54,7 +58,7 @@ export default function BonCommandeDetailPage() {
         montantHt:       Number(form.montantHt) || 0,
         dateFacture:     form.dateFacture || undefined,
         description:     form.description || undefined,
-        statutPaiement:  form.statutPaiement,
+        statutPaiement:  form.statutPaiement === "PAYE" ? "PAID" : form.statutPaiement === "EN_ATTENTE" ? "NOT_PAID" : form.statutPaiement,
       });
       refetch();
       toast.success("Ligne ajoutée.");
@@ -81,7 +85,7 @@ export default function BonCommandeDetailPage() {
   if (lb) return <Loader label="Chargement du bon de commande…" />;
   if (!bc) return <div className="py-16 text-center text-muted">Bon de commande introuvable.</div>;
 
-  const solde = bc.montantRestant === 0;
+  const solde = isBcSolde(bc.montantRestant);
 
   return (
     <>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { UserPlus, Plus, Pencil, Trash2, ShieldAlert } from "lucide-react";
+import { UserPlus, Plus, Pencil, Trash2, ShieldAlert, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SearchInput, EmptyState } from "@/components/app/primitives/misc";
 import { Card, CardHeader } from "@/components/app/primitives/Card";
@@ -95,7 +95,14 @@ export default function UtilisateursPage() {
       <PageHeader
         title="Gestion des utilisateurs"
         subtitle="Comptes utilisateurs, rôles et accès à la plateforme."
-        actions={<Button onClick={openCreate}><UserPlus /> Créer un utilisateur</Button>}
+        actions={
+          <>
+            <Button variant="outline" onClick={() => api.exportUtilisateursExcel().then(() => toast.success("Export téléchargé.")).catch(() => toast.error("Erreur export."))}>
+              <FileDown /> Excel
+            </Button>
+            <Button onClick={openCreate}><UserPlus /> Créer un utilisateur</Button>
+          </>
+        }
       />
 
       <Card>
@@ -124,7 +131,7 @@ export default function UtilisateursPage() {
                   <TR key={u.id}>
                     <TD>
                       <div className="flex items-center gap-3">
-                        <Avatar initials={initiales(u.nom)} size={34} />
+                        <Avatar initials={initiales(u.nom)} photoUrl={u.photoUrl} size={34} />
                         <div>
                           <p className="font-semibold text-ink">{u.prenom ? `${u.prenom} ${u.nom}` : u.nom}</p>
                           <p className="text-xs text-muted">{u.email}</p>
@@ -179,6 +186,26 @@ export default function UtilisateursPage() {
             <div>
               <Label>Mot de passe provisoire</Label>
               <Input type="password" value={form.mdp} onChange={(e) => set("mdp", e.target.value)} placeholder="Min. 8 caractères" required minLength={8} />
+            </div>
+          )}
+          {editUser && (
+            <div>
+              <Label>Photo de profil</Label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file || !editUser) return;
+                  try {
+                    await api.uploadUserPhoto(editUser.id, file);
+                    toast.success("Photo mise à jour.");
+                    refetch();
+                  } catch {
+                    toast.error("Erreur lors de l'upload.");
+                  }
+                }}
+              />
             </div>
           )}
           <div className="flex justify-end gap-2 pt-2">

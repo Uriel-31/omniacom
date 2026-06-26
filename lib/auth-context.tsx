@@ -10,6 +10,7 @@ interface AuthCtx {
   loading: boolean;
   login: (email: string, password: string) => Promise<User>;
   logout: () => void;
+  refreshUser: (user: User) => void;
 }
 
 const Ctx = createContext<AuthCtx | null>(null);
@@ -38,7 +39,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push("/login");
   };
 
-  return <Ctx.Provider value={{ user, loading, login, logout }}>{children}</Ctx.Provider>;
+  const refreshUser = (u: User) => setUser(u);
+
+  return <Ctx.Provider value={{ user, loading, login, logout, refreshUser }}>{children}</Ctx.Provider>;
 }
 
 export function useAuth() {
@@ -52,6 +55,7 @@ export function allowedRolesFor(pathname: string): Role[] {
   if (pathname.startsWith("/planning")) return ["GESTIONNAIRE_PLANNING", "ADMIN"];
   if (pathname.startsWith("/epi"))      return ["GESTIONNAIRE_EPI", "ADMIN"];
   if (pathname.startsWith("/pmo"))      return ["PMO", "ADMIN"];
+  if (pathname.startsWith("/profile"))  return ["GESTIONNAIRE_PLANNING", "GESTIONNAIRE_EPI", "PMO", "ADMIN", "UTILISATEUR"];
   if (pathname.startsWith("/admin"))    return ["ADMIN"];
   return ["GESTIONNAIRE_PLANNING", "GESTIONNAIRE_EPI", "PMO", "ADMIN", "UTILISATEUR"];
 }

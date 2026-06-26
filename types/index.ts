@@ -16,6 +16,7 @@ export interface User {
   nom: string;
   prenom?: string;
   role: Role;
+  photoUrl?: string;
   actif?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -88,11 +89,11 @@ export type VerificationEPIStatut = "CONFORME" | "EN_RETARD" | "DEFECTUEUX";
 export interface VerificationEpi {
   id: number;
   technicienId: number;
-  dateDerniereVerif: string;
+  dateDerniereVerif?: string | null;
   dateDemande: string;
-  dateEnvoie: string;
+  dateEnvoie?: string | null;
   joursRetard: number;
-  prochaineDate: string;
+  prochaineDate?: string | null;
   statut: VerificationEPIStatut;
   technicien?: Technicien;
   equipements?: Equipement[];
@@ -113,34 +114,67 @@ export interface Chantier {
   nomSite: string;
   typeSite: string;
   status: ChantierStatus;
+  comment?: string;
+  projet?: string;
+  statutSite?: string;
+  hauteurTour?: string;
+  fournisseurTour?: string;
+  prixSite?: number;
+  photoUrl?: string;
+  bonDeCommandeId?: number;
   avancementPlanifie?: number;
   avancementReel?: number;
   dateGo?: string;
   etapes?: EtapeChantier[];
+  etapesChantier?: EtapeChantier[];
   bonsDeCommande?: BonDeCommande[];
+  bonDeCommande?: BonDeCommande;
+  photos?: ChantierPhoto[];
 }
 
-export type EtapeChantierStatus = "EN_ATTENTE" | "EN_COURS" | "TERMINE" | "EN_RETARD";
+export interface ChantierPhoto {
+  id: number;
+  chantierId: number;
+  url: string;
+  legende?: string;
+  createdAt?: string;
+}
+
+export type EtapeChantierStatus = "EN_ATTENTE" | "EN_COURS" | "TERMINE" | "EN_RETARD" | "NON_APPLICABLE";
 
 export interface EtapeChantier {
   id: number;
   chantierId: number;
+  codeEtape?: string;
   nomEtape: string;
+  ordre?: number;
   datePlanifiee?: string;
   dateReelle?: string;
+  retardJours?: number;
   retardMinutes?: number;
   status: EtapeChantierStatus;
 }
 
 export interface BonDeCommande {
   id: number;
-  chantierId: number;
   numeroBc: string;
   montantPo: number;
   montantFacture: number;
   montantRestant: number;
   projetAssocie?: string;
+  chantiers?: Chantier[];
   lignes?: LigneFacturation[];
+  lignesFacturation?: LigneFacturation[];
+}
+
+export interface BcSummary {
+  bons: BonDeCommande[];
+  totaux: {
+    totalPo: number;
+    totalFacture: number;
+    totalRestant: number;
+    nbBons: number;
+  };
 }
 
 export interface LigneFacturation {

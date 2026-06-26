@@ -1,45 +1,35 @@
-/**
- * Proxy Next.js pour la protection des routes.
- *
- * Verifie la presence d'un token JWT valide avant d'autoriser
- * l'acces aux routes protegees. Les routes publiques d'auth
- * redirigent vers le dashboard si l'utilisateur est deja connecte.
- *
- * Configuration :
- * - `protectedRoutes` : routes necessitant une authentification
- * - `authRoutes` : routes accessibles uniquement aux visiteurs non connectes
- *
- * Voir la documentation complete : CONTRIBUTING.md
- */
-
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Routes qui necessitent une authentification
-const protectedRoutes = ["/dashboard", "/profile", "/settings"];
-
-// Routes accessibles uniquement aux visiteurs non connectes
-const authRoutes = ["/auth/login", "/auth/register"];
+const PROTECTED_PATHS = ["/planning", "/epi", "/pmo", "/admin", "/profile", "/settings"];
+const AUTH_PATHS = ["/auth/login", "/auth/register", "/login"];
 
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const accessToken =
+  const token =
     request.cookies.get("access_token")?.value ||
     request.headers.get("authorization")?.replace("Bearer ", "");
+  const { pathname } = request.nextUrl;
 
-  // Route protegee : verifier le token
-  if (protectedRoutes.some((route) => pathname.startsWith(route))) {
-    if (!accessToken) {
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/favicon") ||
+    pathname.match(/\.(png|jpg|jpeg|gif|webp|svg|ico)$/)
+  ) {
+    return NextResponse.next();
+  }
+
+  if (PROTECTED_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+    if (!token) {
       const loginUrl = new URL("/auth/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
   }
 
-  // Route d'auth : rediriger vers le dashboard si deja connecte
-  if (authRoutes.some((route) => pathname.startsWith(route))) {
-    if (accessToken) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+  if (AUTH_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+    if (token) {
+      return NextResponse.redirect(new URL("/", request.url));
     }
   }
 
@@ -48,7 +38,6 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Exclure les fichiers statiques, api, _next/static, etc.
-    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico)$).*)",
   ],
 };

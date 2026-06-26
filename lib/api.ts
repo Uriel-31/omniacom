@@ -1,8 +1,8 @@
 import axios from "axios";
 import type {
   User, Technicien, Site, Intervention, Presence,
-  VerificationEpi, Chantier, BonDeCommande, Equipement,
-  EtapeChantier, LigneFacturation, ApiResponse,
+  VerificationEpi,   Chantier, BonDeCommande, Equipement,
+  EtapeChantier, LigneFacturation, ApiResponse, BcSummary, ChantierPhoto,
 } from "@/types";
 
 const TOKEN_KEY = "omniacom_token";
@@ -70,6 +70,36 @@ async function getList<T>(path: string): Promise<T[]> {
   return res.data.data;
 }
 
+async function downloadBlob(path: string, filename: string): Promise<void> {
+  const res = await http.get(path, { responseType: "blob" });
+  const url = URL.createObjectURL(res.data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function uploadFile<T>(path: string, file: File, extra?: Record<string, string>): Promise<T> {
+  const form = new FormData();
+  form.append("file", file);
+  if (extra) Object.entries(extra).forEach(([k, v]) => form.append(k, v));
+  const res = await http.post<ApiResponse<T>>(path, form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data.data;
+}
+
+async function uploadPhoto<T>(path: string, file: File, extra?: Record<string, string>): Promise<T> {
+  const form = new FormData();
+  form.append("photo", file);
+  if (extra) Object.entries(extra).forEach(([k, v]) => form.append(k, v));
+  const res = await http.post<ApiResponse<T>>(path, form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data.data;
+}
+
 /** Extrait data d'une réponse simple backend { success, data }. */
 async function getOne<T>(path: string): Promise<T> {
   const res = await http.get<ApiResponse<T>>(path);
@@ -115,6 +145,10 @@ export const api = {
 
   async deleteUser(id: number): Promise<void> {
     await http.delete(`/utilisateurs/${id}`);
+  },
+
+  async uploadUserPhoto(id: number, file: File): Promise<User> {
+    return uploadPhoto<User>(`/utilisateurs/${id}/photo`, file);
   },
 
   auditLogs: () => getList<import("@/types").AuditLog>("/admin/logs"),
@@ -220,6 +254,8 @@ export const api = {
   // --- PMO : chantiers ---
   chantiers: () => getList<Chantier>("/chantiers"),
 
+  dailyProgress: () => getList<Chantier>("/chantiers/daily-progress"),
+
   async createChantier(payload: Omit<Chantier, "id" | "etapes" | "bonsDeCommande">): Promise<Chantier> {
     const res = await http.post<ApiResponse<Chantier>>("/chantiers", payload);
     return res.data.data;
@@ -245,12 +281,29 @@ export const api = {
     return res.data.data;
   },
 
+  async updateEtapeChantier(id: number, payload: Partial<EtapeChantier>): Promise<EtapeChantier> {
+    const res = await http.put<ApiResponse<EtapeChantier>>(`/etapes-chantier/${id}`, payload);
+    return res.data.data;
+  },
+
   async deleteEtapeChantier(id: number): Promise<void> {
     await http.delete(`/etapes-chantier/${id}`);
   },
 
+  async uploadChantierPhoto(id: number, file: File, setCover = true): Promise<ChantierPhoto> {
+    return uploadPhoto<ChantierPhoto>(`/chantiers/${id}/photos`, file, {
+      setCover: setCover ? "true" : "false",
+    });
+  },
+
+  async deleteChantierPhoto(chantierId: number, photoId: number): Promise<void> {
+    await http.delete(`/chantiers/${chantierId}/photos/${photoId}`);
+  },
+
   // --- PMO : bons de commande ---
   bonsCommande: () => getList<BonDeCommande>("/bons-de-commande"),
+
+  bcSummary: () => getOne<BcSummary>("/bons-de-commande/summary"),
 
   bonCommande: (id: number) => getOne<BonDeCommande>(`/bons-de-commande/${id}`),
 
@@ -289,5 +342,19 @@ export const api = {
 
   async updateSettings(payload: Record<string, string>): Promise<void> {
     await http.put("/admin/settings", payload);
+  },
+
+  // --- Excel import / export ---
+  exportDailyTracker: () => downloadBlob("/excel/export/daily-tracker", "daily-reporting-tracker.xlsx"),
+  exportBcSuivi: () => downloadBlob("/excel/export/bc-suivi", "suivi-bc-cw-ocm.xlsx"),
+  exportChantiersExcel: () => downloadBlob("/excel/export/chantiers", "chantiers.xlsx"),
+  exportUtilisateursExcel: () => downloadBlob("/excel/export/utilisateurs", "utilisateurs.xlsx"),
+
+  async importDailyTracker(file: File) {
+    return uploadFile<{ imported: number }>("/excel/import/daily-tracker", file);
+  },
+
+  async importBcSuivi(file: File) {
+    return uploadFile<{ sitesImported: number; lignesImported: number }>("/excel/import/bc-suivi", file);
   },
 };

@@ -6,7 +6,7 @@ import { StatCard } from "@/components/app/primitives/StatCard";
 import { Loader } from "@/components/app/brand/Logo";
 import { useAsync } from "@/hooks/use-async";
 import { api } from "@/lib/api";
-import { formatMontant } from "@/lib/utils";
+import { formatMontant, isBcSolde, sumAmounts } from "@/lib/utils";
 
 export default function PmoDashboard() {
   const { data: chantiers, loading: lc } = useAsync(() => api.chantiers(), []);
@@ -21,9 +21,9 @@ export default function PmoDashboard() {
   const termines  = ch.filter((c) => c.status === "DONE").length;
   const incidents = ch.filter((c) => c.status === "LANDLORD_ISSUE" || c.status === "NEED_CLEAN_SITE").length;
 
-  const totalPO      = bons.reduce((s, b) => s + b.montantPo, 0);
-  const totalFacture = bons.reduce((s, b) => s + b.montantFacture, 0);
-  const totalRestant = bons.reduce((s, b) => s + b.montantRestant, 0);
+  const totalPO      = sumAmounts(bons, (b) => b.montantPo);
+  const totalFacture = sumAmounts(bons, (b) => b.montantFacture);
+  const totalRestant = sumAmounts(bons, (b) => b.montantRestant);
   const tauxFactu    = totalPO ? (totalFacture / totalPO) * 100 : 0;
 
   return (
@@ -47,7 +47,7 @@ export default function PmoDashboard() {
         <StatCard label="Montant total PO"       value={formatMontant(totalPO)} icon={<Wallet />} tone="var(--color-brand-500)" />
         <StatCard label="Facturé"                value={formatMontant(totalFacture)} percent={tauxFactu} tone="var(--color-ok)" />
         <StatCard label="Restant à payer"        value={formatMontant(totalRestant)} icon={<TrendingUp />} tone="var(--color-warn)" />
-        <StatCard label="BC soldés"              value={bons.filter((b) => b.montantRestant === 0).length} icon={<CheckCircle2 />} tone="var(--color-ok)" />
+        <StatCard label="BC soldés"              value={bons.filter((b) => isBcSolde(b.montantRestant)).length} icon={<CheckCircle2 />} tone="var(--color-ok)" />
       </div>
     </>
   );

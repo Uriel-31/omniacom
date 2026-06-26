@@ -8,9 +8,9 @@ import {
   Building2,
   Receipt,
   UserCog,
-  HardHat,
   ScrollText,
   Settings,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 import type {
@@ -39,14 +39,14 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { label: "Feuilles de présence",   href: "/planning/presences",    icon: ClipboardList    },
   ],
   GESTIONNAIRE_EPI: [
-    { label: "Dashboard",     href: "/epi",               icon: LayoutDashboard },
-    { label: "Équipements",   href: "/epi/equipements",   icon: HardHat         },
-    { label: "Vérifications", href: "/epi/verifications", icon: ShieldCheck     },
+    { label: "Vérifications", href: "/epi/verifications", icon: ShieldCheck },
   ],
   PMO: [
     { label: "Dashboard",         href: "/pmo",                 icon: LayoutDashboard },
+    { label: "Suivi quotidien",   href: "/pmo/suivi-quotidien", icon: ClipboardList   },
     { label: "Chantiers",         href: "/pmo/chantiers",       icon: Building2       },
     { label: "Bons de commande",  href: "/pmo/bons-commande",   icon: Receipt         },
+    { label: "Suivi paiement",    href: "/pmo/suivi-paiement",  icon: Wallet          },
   ],
   ADMIN: [
     { label: "Utilisateurs", href: "/admin/utilisateurs",  icon: UserCog         },
@@ -68,9 +68,9 @@ export const ROLE_LABEL: Record<Role, string> = {
 
 export const HOME_BY_ROLE: Record<Role, string> = {
   GESTIONNAIRE_PLANNING: "/planning",
-  GESTIONNAIRE_EPI:      "/epi",
+  GESTIONNAIRE_EPI:      "/epi/verifications",
   PMO:                   "/pmo",
-  ADMIN:                 "/admin/utilisateurs",
+  ADMIN:                 "/admin",
   UTILISATEUR:           "/planning",
 };
 
@@ -123,6 +123,7 @@ export const ETAPE_STATUS_LABEL: Record<EtapeChantierStatus, string> = {
   EN_COURS:   "En cours",
   TERMINE:    "Terminé",
   EN_RETARD:  "En retard",
+  NON_APPLICABLE: "N/A",
 };
 
 // --- Variantes de couleur pour les badges ---

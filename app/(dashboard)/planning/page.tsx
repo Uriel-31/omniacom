@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, UserCheck, UserX, Phone, Plus } from "lucide-react";
+import { Users, UserCheck, UserX, Phone } from "lucide-react";
 import { PageHeader } from "@/components/app/primitives/misc";
 import { StatCard } from "@/components/app/primitives/StatCard";
 import { Card, CardHeader } from "@/components/app/primitives/Card";
@@ -45,11 +45,6 @@ export default function PlanningDashboard() {
       <PageHeader
         title="Planning & Présences"
         subtitle={`Vue du jour — ${formatDate(new Date().toISOString())}`}
-        actions={
-          <Button size="md">
-            <Plus /> Nouvelle intervention
-          </Button>
-        }
       />
 
       {/* KPI */}

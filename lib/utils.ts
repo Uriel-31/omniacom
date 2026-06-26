@@ -28,7 +28,7 @@ export function formatDate(iso?: string) {
 }
 
 /** Date courte : 24/05/2024. */
-export function formatDateShort(iso?: string) {
+export function formatDateShort(iso?: string | null) {
   if (!iso) return "—";
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "—";
@@ -50,12 +50,29 @@ export function relativeTime(iso?: string) {
   return `il y a ${j} jours`;
 }
 
+/** Convertit un montant Prisma Decimal (souvent une chaîne JSON) en nombre. */
+export function toAmount(value: unknown): number {
+  if (value == null || value === "") return 0;
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+/** Somme des montants d'une liste (évite la concaténation de chaînes). */
+export function sumAmounts<T>(items: T[], pick: (item: T) => unknown): number {
+  return items.reduce((sum, item) => sum + toAmount(pick(item)), 0);
+}
+
+/** BC soldé lorsque le montant restant est nul. */
+export function isBcSolde(montantRestant: unknown): boolean {
+  return toAmount(montantRestant) === 0;
+}
+
 /** Montant en FCFA (XAF) : 1 250 000 FCFA. */
-export function formatMontant(n: number) {
+export function formatMontant(n: number | string) {
   return new Intl.NumberFormat("fr-FR", {
     style: "decimal",
     maximumFractionDigits: 0,
-  }).format(n) + " FCFA";
+  }).format(toAmount(n)) + " FCFA";
 }
 
 /** Jours de retard EPI = date d'envoi − date de demande. */

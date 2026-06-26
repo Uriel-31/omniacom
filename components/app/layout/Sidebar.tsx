@@ -60,8 +60,12 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       {/* Profil utilisateur */}
       <div className="border-t border-line p-3">
-        <div className="flex items-center gap-3 rounded-xl px-2 py-2.5 hover:bg-canvas transition-colors">
-          <Avatar initials={initiales(user.nom)} size={34} />
+        <Link
+          href="/profile"
+          onClick={onNavigate}
+          className="flex items-center gap-3 rounded-xl px-2 py-2.5 hover:bg-canvas transition-colors"
+        >
+          <Avatar initials={initiales(user.nom)} photoUrl={user.photoUrl} size={34} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-ink">{user.nom}</p>
             <p className="truncate text-xs text-muted">
@@ -69,14 +73,18 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             </p>
           </div>
           <button
-            onClick={logout}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              logout();
+            }}
             className="rounded-lg p-1.5 text-faint transition-colors hover:bg-[var(--color-danger-soft)] hover:text-[var(--color-danger)]"
             aria-label="Se déconnecter"
             title="Se déconnecter"
           >
             <LogOut className="size-4" />
           </button>
-        </div>
+        </Link>
       </div>
     </aside>
   );

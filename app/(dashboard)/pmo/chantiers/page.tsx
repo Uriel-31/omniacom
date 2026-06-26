@@ -93,20 +93,12 @@ export default function ChantiersPage() {
   }
 
   async function handleExcelExport() {
-    const { exportExcel } = await import("@/lib/export");
-    exportExcel(
-      rows.map((c) => ({
-        "Code Site":            c.codeSite,
-        "Nom Site":             c.nomSite,
-        "Entreprise":           c.entreprise,
-        "Type":                 c.typeSite,
-        "Statut":               CHANTIER_STATUS_LABEL[c.status],
-        "Avancement planifié":  c.avancementPlanifie !== undefined ? `${c.avancementPlanifie}%` : "—",
-        "Avancement réel":      c.avancementReel     !== undefined ? `${c.avancementReel}%`     : "—",
-        "Date GO":              formatDateShort(c.dateGo),
-      })),
-      "chantiers",
-    );
+    try {
+      await api.exportChantiersExcel();
+      toast.success("Export Excel téléchargé.");
+    } catch {
+      toast.error("Erreur lors de l'export.");
+    }
   }
 
   async function handlePdfExport() {
