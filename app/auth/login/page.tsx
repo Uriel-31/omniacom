@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { HOME_BY_ROLE } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, AlertCircle } from "lucide-react";
 import type { Role } from "@/types";
 
-export default function Login() {
+function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [email, setEmail] = useState("");
@@ -176,4 +176,12 @@ export default function Login() {
         </div>
         </main>
     );
+}
+
+export default function Login() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
+  );
 }
