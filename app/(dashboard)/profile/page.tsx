@@ -16,7 +16,7 @@ export default function ProfilePage() {
 
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !user) return;
     try {
       const updated = await api.uploadUserPhoto(user.id, file);
       storage.setUser(updated);
