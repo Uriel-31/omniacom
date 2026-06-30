@@ -130,8 +130,8 @@ export default function InterventionsPage() {
   }
 
   async function handleExcelExport() {
-    const { exportExcel } = await import("@/lib/export");
-    exportExcel(
+    const { exportPlanningExcel } = await import("@/lib/export");
+    exportPlanningExcel(
       rows.map((i) => {
         const siteNom = i.site?.nom ?? getSiteNom(i.siteId);
         const tech    = i.technicien ?? getTech(i.technicienId);

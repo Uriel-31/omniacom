@@ -91,6 +91,7 @@ export interface VerificationEpi {
   technicienId: number;
   dateDerniereVerif?: string | null;
   dateDemande: string;
+  dateDelaiVerification?: string | null;
   dateEnvoie?: string | null;
   joursRetard: number;
   prochaineDate?: string | null;

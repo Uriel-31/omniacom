@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useCallback } from "react";
-import { Plus, Trash2, Pencil, FileDown, History } from "lucide-react";
+import { Plus, Trash2, Pencil, FileDown, History, CalendarCheck } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SearchInput, EmptyState } from "@/components/app/primitives/misc";
 import { Card } from "@/components/app/primitives/Card";
@@ -15,11 +15,11 @@ import { api } from "@/lib/api";
 import { formatDateShort } from "@/lib/utils";
 import type { VerificationEpi, VerificationEPIStatut } from "@/types";
 
-const EMPTY_FORM = { techId: "", derniere: "", demande: "", envoi: "", prochaine: "" };
+const EMPTY_FORM = { techId: "", derniere: "", demande: "", delai: "", envoi: "", prochaine: "" };
 
-function calcJours(demande: string, envoi: string): number | null {
-  if (!demande || !envoi) return null;
-  return Math.round((new Date(envoi).getTime() - new Date(demande).getTime()) / 86_400_000);
+function calcJours(delai: string, envoi: string): number | null {
+  if (!delai || !envoi) return null;
+  return Math.round((new Date(envoi).getTime() - new Date(delai).getTime()) / 86_400_000);
 }
 
 export default function VerificationsPage() {
@@ -27,6 +27,7 @@ export default function VerificationsPage() {
   const { data, loading }           = useAsync(() => api.verifications(), [refreshKey]);
   const { data: techniciens }       = useAsync(() => api.techniciens(), []);
 
+  const [dateVerif, setDateVerif] = useState(() => new Date().toISOString().slice(0, 10));
   const [q, setQ]               = useState("");
   const [open, setOpen]         = useState(false);
   const [histOpen, setHistOpen] = useState(false);
@@ -39,7 +40,7 @@ export default function VerificationsPage() {
 
   const refetch = useCallback(() => setRefreshKey((k) => k + 1), []);
 
-  const joursPreview = calcJours(form.demande, form.envoi);
+  const joursPreview = calcJours(form.delai, form.envoi);
 
   const rows = useMemo(() => {
     let r = data ?? [];
@@ -73,6 +74,7 @@ export default function VerificationsPage() {
       techId:    String(v.technicienId),
       derniere:  v.dateDerniereVerif?.slice(0, 10) ?? "",
       demande:   v.dateDemande.slice(0, 10),
+      delai:     v.dateDelaiVerification?.slice(0, 10) ?? "",
       envoi:     v.dateEnvoie?.slice(0, 10) ?? "",
       prochaine: v.prochaineDate?.slice(0, 10) ?? "",
     });
@@ -92,15 +94,16 @@ export default function VerificationsPage() {
     e.preventDefault();
     setBusy(true);
     try {
-      const jours = calcJours(form.demande, form.envoi) ?? 0;
+      const jours = calcJours(form.delai, form.envoi) ?? 0;
       const statut: VerificationEPIStatut = jours > 0 ? "EN_RETARD" : "CONFORME";
       const payload = {
-        technicienId:      Number(form.techId),
-        dateDerniereVerif: form.derniere || null,
-        dateDemande:       form.demande,
-        dateEnvoie:        form.envoi || null,
-        joursRetard:       jours,
-        prochaineDate:     form.prochaine || null,
+        technicienId:           Number(form.techId),
+        dateDerniereVerif:      form.derniere || null,
+        dateDemande:            form.demande,
+        dateDelaiVerification:  form.delai || null,
+        dateEnvoie:             form.envoi || null,
+        joursRetard:            jours,
+        prochaineDate:          form.prochaine || null,
         statut,
       };
       if (editItem) {
@@ -139,10 +142,12 @@ export default function VerificationsPage() {
         dateDerniereVerif: formatDateShort(v.dateDerniereVerif),
         dateDemande:       formatDateShort(v.dateDemande),
         dateEnvoie:        formatDateShort(v.dateEnvoie),
-        joursRetard:       calcJours(v.dateDemande, v.dateEnvoie ?? "") ?? "—",
+        dateDelaiVerif:    formatDateShort(v.dateDelaiVerification),
+        joursRetard:       calcJours(v.dateDelaiVerification ?? "", v.dateEnvoie ?? "") ?? "—",
         prochaineDate:     formatDateShort(v.prochaineDate),
       })),
       "tracker-suivi-evidences-epi",
+      dateVerif,
     );
   }
 
@@ -158,6 +163,19 @@ export default function VerificationsPage() {
           </>
         }
       />
+
+      <div className="flex items-center gap-3 rounded-xl border border-line bg-surface px-5 py-4">
+        <CalendarCheck className="size-5 text-danger shrink-0" />
+        <div className="flex flex-1 flex-wrap items-center gap-3">
+          <span className="text-sm font-medium text-ink">Date de vérification du jour</span>
+          <input
+            type="date"
+            value={dateVerif}
+            onChange={(e) => setDateVerif(e.target.value)}
+            className="h-9 rounded-lg border border-line bg-canvas px-3 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-danger/30"
+          />
+        </div>
+      </div>
 
       <Card>
         <div className="flex items-center justify-between gap-3 border-b border-line p-4">
@@ -175,6 +193,7 @@ export default function VerificationsPage() {
               <TH>Prénoms</TH>
               <TH>Date dernière vérif.</TH>
               <TH>Date de demande</TH>
+              <TH>Date délai de vérif.</TH>
               <TH>Date d'envoi</TH>
               <TH>Jours de retard</TH>
               <TH>Date prochaine vérif.</TH>
@@ -182,13 +201,14 @@ export default function VerificationsPage() {
             </THead>
             <TBody>
               {rows.map((v) => {
-                const jr = calcJours(v.dateDemande, v.dateEnvoie ?? "");
+                const jr = calcJours(v.dateDelaiVerification ?? "", v.dateEnvoie ?? "");
                 return (
                   <TR key={v.id}>
                     <TD className="font-semibold text-ink">{v.technicien?.nom ?? `#${v.technicienId}`}</TD>
                     <TD>{v.technicien?.prenom ?? ""}</TD>
                     <TD className="tabular text-muted">{formatDateShort(v.dateDerniereVerif ?? undefined)}</TD>
                     <TD className="tabular text-muted">{formatDateShort(v.dateDemande)}</TD>
+                    <TD className="tabular text-muted">{formatDateShort(v.dateDelaiVerification ?? undefined)}</TD>
                     <TD className="tabular text-muted">{formatDateShort(v.dateEnvoie ?? undefined)}</TD>
                     <TD className="tabular">
                       {jr === null ? (
@@ -245,6 +265,10 @@ export default function VerificationsPage() {
             <div>
               <Label>Date de demande des évidences <span className="text-danger">*</span></Label>
               <Input type="date" value={form.demande} onChange={(e) => setF("demande", e.target.value)} required />
+            </div>
+            <div>
+              <Label>Date délai de vérification</Label>
+              <Input type="date" value={form.delai} onChange={(e) => setF("delai", e.target.value)} />
             </div>
             <div>
               <Label>Date d'envoi de la ressource</Label>

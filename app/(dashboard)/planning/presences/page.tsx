@@ -38,8 +38,8 @@ export default function PresencesPage() {
   const absents  = Object.values(marks).filter((s) => s === "ABSENT").length;
 
   async function handleExcelExport() {
-    const { exportExcel } = await import("@/lib/export");
-    exportExcel(
+    const { exportPlanningExcel } = await import("@/lib/export");
+    exportPlanningExcel(
       techs.map((t) => ({
         "Technicien": `${t.prenom} ${t.nom}`,
         "Date":       date,

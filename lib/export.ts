@@ -17,6 +17,72 @@ export async function exportExcel(
   XLSX.writeFile(wb, `${filename}.xlsx`);
 }
 
+async function makeStyledExcel(
+  argb: string,
+  sheetName: string,
+  rows: Record<string, string | number>[],
+  filename: string,
+) {
+  if (rows.length === 0) return;
+  const ExcelJS = (await import("exceljs")).default ?? (await import("exceljs"));
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet(sheetName);
+
+  const keys = Object.keys(rows[0]);
+  sheet.columns = keys.map((key) => ({
+    header: key,
+    key,
+    width: Math.max(key.length + 4, 20),
+  }));
+
+  const headerRow = sheet.getRow(1);
+  headerRow.height = 38;
+  headerRow.eachCell((cell) => {
+    cell.fill   = { type: "pattern", pattern: "solid", fgColor: { argb } };
+    cell.font   = { bold: true, color: { argb: "FFFFFFFF" }, size: 10, name: "Calibri" };
+    cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+    cell.border = {
+      top:    { style: "thin", color: { argb: "FF000000" } },
+      left:   { style: "thin", color: { argb: "FF000000" } },
+      bottom: { style: "thin", color: { argb: "FF000000" } },
+      right:  { style: "thin", color: { argb: "FF000000" } },
+    };
+  });
+
+  rows.forEach((r) => {
+    const row = sheet.addRow(r);
+    row.height = 18;
+    row.eachCell({ includeEmpty: true }, (cell) => {
+      cell.alignment = { vertical: "middle" };
+      cell.border = {
+        top:    { style: "thin", color: { argb: "FFD3D3D3" } },
+        left:   { style: "thin", color: { argb: "FFD3D3D3" } },
+        bottom: { style: "thin", color: { argb: "FFD3D3D3" } },
+        right:  { style: "thin", color: { argb: "FFD3D3D3" } },
+      };
+    });
+  });
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob   = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const url    = URL.createObjectURL(blob);
+  const a      = document.createElement("a");
+  a.href       = url;
+  a.download   = `${filename}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Export Excel stylisé Planning — bleu #1D4ED8. */
+export async function exportPlanningExcel(rows: Record<string, string | number>[], filename: string) {
+  await makeStyledExcel("FF1D4ED8", "Planning", rows, filename);
+}
+
+/** Export Excel stylisé PMO — vert #15803D. */
+export async function exportPmoExcel(rows: Record<string, string | number>[], filename: string) {
+  await makeStyledExcel("FF15803D", "PMO", rows, filename);
+}
+
 /** Export Excel stylisé pour le tracker EPI. */
 export async function exportEpiExcel(
   rows: {
@@ -24,11 +90,13 @@ export async function exportEpiExcel(
     prenom: string;
     dateDerniereVerif: string;
     dateDemande: string;
+    dateDelaiVerif: string;
     dateEnvoie: string;
     joursRetard: string | number;
     prochaineDate: string;
   }[],
   filename: string,
+  dateVerif?: string,
 ) {
   const ExcelJS = (await import("exceljs")).default ?? (await import("exceljs"));
   const workbook = new ExcelJS.Workbook();
@@ -39,15 +107,29 @@ export async function exportEpiExcel(
     { header: "Prénoms",                           key: "prenom",            width: 18 },
     { header: "Date dernière vérification",        key: "dateDerniereVerif", width: 28 },
     { header: "Date de demande des évidences",     key: "dateDemande",       width: 30 },
+    { header: "Date délai de vérification",        key: "dateDelaiVerif",    width: 28 },
     { header: "Date d'envoi de la ressource",      key: "dateEnvoie",        width: 28 },
     { header: "Nombre de jours de retard",         key: "joursRetard",       width: 25 },
     { header: "Date de prochaine vérification",    key: "prochaineDate",     width: 30 },
   ];
 
+  // Ligne titre avec date de vérification
+  if (dateVerif) {
+    const dateFormatted = new Date(dateVerif).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+    const titleRow = sheet.addRow([`TRACKER SUIVI ÉVIDENCES EPI — Vérification du ${dateFormatted}`]);
+    titleRow.height = 28;
+    const titleCell = titleRow.getCell(1);
+    titleCell.font      = { bold: true, size: 12, color: { argb: "FFD0453A" }, name: "Calibri" };
+    titleCell.alignment = { vertical: "middle" };
+    sheet.mergeCells(`A1:G1`);
+    sheet.addRow([]);
+  }
+
   sheet.columns = COLS.map(({ header, key, width }) => ({ header, key, width }));
 
-  // Style en-tête
-  const headerRow = sheet.getRow(1);
+  // Ligne d'en-tête (décalée si titre présent)
+  const headerRowIndex = dateVerif ? 3 : 1;
+  const headerRow = sheet.getRow(headerRowIndex);
   headerRow.height = 42;
   headerRow.eachCell((cell) => {
     cell.fill   = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD0453A" } };
@@ -68,6 +150,7 @@ export async function exportEpiExcel(
       prenom:            r.prenom,
       dateDerniereVerif: r.dateDerniereVerif,
       dateDemande:       r.dateDemande,
+      dateDelaiVerif:    r.dateDelaiVerif,
       dateEnvoie:        r.dateEnvoie,
       joursRetard:       r.joursRetard,
       prochaineDate:     r.prochaineDate,

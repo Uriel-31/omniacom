@@ -65,8 +65,8 @@ export default function BonsCommandePage() {
   function closeModal() { setOpen(false); setEditItem(null); resetForm(); }
 
   async function handleExcelExport() {
-    const { exportExcel } = await import("@/lib/export");
-    exportExcel(
+    const { exportPmoExcel } = await import("@/lib/export");
+    exportPmoExcel(
       rows.map((b) => ({
         "N° BC":           b.numeroBc,
         "Projet associé":  b.projetAssocie ?? "—",
